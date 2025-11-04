@@ -479,7 +479,4 @@ Documentação completa dos fluxos de usuário para cada tipo de perfil no siste
 
 ---
 
-**Documento gerado em:** 2025  
-**Versão:** 1.0  
-**Sistema:** Aerocode - Controle de Fabricação de Aeronaves
 

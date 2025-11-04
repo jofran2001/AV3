@@ -49,6 +49,17 @@ app.get('/api/aeronaves', requireAuth, (req: Request, res: Response) => {
   res.json(prodService.listAeronaves());
 });
 
+// Obter aeronave por código
+app.get('/api/aeronaves/:codigo', requireAuth, (req: Request, res: Response) => {
+  const { codigo } = req.params;
+  try {
+    const a = prodService.getAeronave(codigo);
+    res.json(a);
+  } catch (e: any) {
+    res.status(404).json({ error: e.message });
+  }
+});
+
 // Cadastrar aeronave
 app.post('/api/aeronaves', requireAuth, (req: Request, res: Response) => {
   const user = (req as any).user;
@@ -62,6 +73,39 @@ app.post('/api/aeronaves', requireAuth, (req: Request, res: Response) => {
     res.json({ success: true, message: 'Aeronave cadastrada' });
   } catch (e: any) {
     res.status(400).json({ error: e.message });
+  }
+});
+
+// Atualizar aeronave
+app.put('/api/aeronaves/:codigo', requireAuth, (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (![NivelPermissao.ADMINISTRADOR, NivelPermissao.ENGENHEIRO].includes(user.nivelPermissao)) {
+    return res.status(403).json({ error: 'Permissão negada' });
+  }
+  const { codigo } = req.params;
+  const { modelo, tipo, capacidade, alcanceKm } = req.body;
+  try {
+    prodService.atualizarAeronave(codigo, { modelo, tipo, capacidade, alcanceKm });
+    res.json({ success: true, message: 'Aeronave atualizada' });
+  } catch (e: any) {
+    const status = e.message.includes('não encontrada') ? 404 : 400;
+    res.status(status).json({ error: e.message });
+  }
+});
+
+// Excluir aeronave
+app.delete('/api/aeronaves/:codigo', requireAuth, (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (user.nivelPermissao !== NivelPermissao.ADMINISTRADOR) {
+    return res.status(403).json({ error: 'Permissão negada' });
+  }
+  const { codigo } = req.params;
+  try {
+    prodService.excluirAeronave(codigo);
+    res.json({ success: true, message: 'Aeronave excluída' });
+  } catch (e: any) {
+    const status = e.message.includes('não encontrada') ? 404 : 400;
+    res.status(status).json({ error: e.message });
   }
 });
 
@@ -80,6 +124,29 @@ app.post('/api/aeronaves/:codigo/pecas', requireAuth, (req: Request, res: Respon
     res.json({ success: true, message: 'Peça adicionada' });
   } catch (e: any) {
     res.status(400).json({ error: e.message });
+  }
+});
+
+// Listar peças
+app.get('/api/aeronaves/:codigo/pecas', requireAuth, (req: Request, res: Response) => {
+  const { codigo } = req.params;
+  try {
+    const pecas = prodService.listarPecas(codigo);
+    res.json(pecas);
+  } catch (e: any) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// Obter peça específica
+app.get('/api/aeronaves/:codigo/pecas/:idx', requireAuth, (req: Request, res: Response) => {
+  const { codigo, idx } = req.params;
+  try {
+    const peca = prodService.obterPeca(codigo, parseInt(idx));
+    res.json(peca);
+  } catch (e: any) {
+    const status = e.message.includes('Peça inválida') ? 404 : 400;
+    res.status(status).json({ error: e.message });
   }
 });
 
@@ -117,6 +184,62 @@ app.post('/api/aeronaves/:codigo/testes', requireAuth, (req: Request, res: Respo
   }
 });
 
+// Listar testes da aeronave
+app.get('/api/aeronaves/:codigo/testes', requireAuth, (req: Request, res: Response) => {
+  const { codigo } = req.params;
+  try {
+    const testes = prodService.listarTestes(codigo);
+    res.json(testes);
+  } catch (e: any) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// Obter teste específico
+app.get('/api/aeronaves/:codigo/testes/:idx', requireAuth, (req: Request, res: Response) => {
+  const { codigo, idx } = req.params;
+  try {
+    const teste = prodService.obterTeste(codigo, parseInt(idx));
+    res.json(teste);
+  } catch (e: any) {
+    const status = e.message.includes('invalido') || e.message.includes('inválido') ? 404 : 400;
+    res.status(status).json({ error: e.message });
+  }
+});
+
+// Atualizar teste
+app.put('/api/aeronaves/:codigo/testes/:idx', requireAuth, (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (![NivelPermissao.ADMINISTRADOR, NivelPermissao.ENGENHEIRO].includes(user.nivelPermissao)) {
+    return res.status(403).json({ error: 'Permissão negada' });
+  }
+  const { codigo, idx } = req.params;
+  const { tipo, resultado } = req.body;
+  try {
+    prodService.atualizarTeste(codigo, parseInt(idx), { tipo, resultado });
+    res.json({ success: true, message: 'Teste atualizado' });
+  } catch (e: any) {
+    const status = e.message.includes('inválido') ? 404 : 400;
+    res.status(status).json({ error: e.message });
+  }
+});
+
+// Excluir teste
+app.delete('/api/aeronaves/:codigo/testes/:idx', requireAuth, (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (![NivelPermissao.ADMINISTRADOR, NivelPermissao.ENGENHEIRO].includes(user.nivelPermissao)) {
+    return res.status(403).json({ error: 'Permissão negada' });
+  }
+  const { codigo, idx } = req.params;
+  try {
+    prodService.excluirTeste(codigo, parseInt(idx));
+    res.json({ success: true, message: 'Teste excluído' });
+  } catch (e: any) {
+    const status = e.message.includes('inválido') ? 404 : 400;
+    res.status(status).json({ error: e.message });
+  }
+});
+
 // Atualizar status peça
 app.put('/api/aeronaves/:codigo/pecas/:idx/status', requireAuth, (req: Request, res: Response) => {
   const { codigo, idx } = req.params;
@@ -126,6 +249,39 @@ app.put('/api/aeronaves/:codigo/pecas/:idx/status', requireAuth, (req: Request, 
     res.json({ success: true });
   } catch (e: any) {
     res.status(400).json({ error: e.message });
+  }
+});
+
+// Atualizar peça (campos gerais)
+app.put('/api/aeronaves/:codigo/pecas/:idx', requireAuth, (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (![NivelPermissao.ADMINISTRADOR, NivelPermissao.ENGENHEIRO].includes(user.nivelPermissao)) {
+    return res.status(403).json({ error: 'Permissão negada' });
+  }
+  const { codigo, idx } = req.params;
+  const { nome, tipo, fornecedor, status } = req.body;
+  try {
+    prodService.atualizarPeca(codigo, parseInt(idx), { nome, tipo, fornecedor, status });
+    res.json({ success: true, message: 'Peça atualizada' });
+  } catch (e: any) {
+    const statusCode = e.message.includes('Peça inválida') ? 404 : 400;
+    res.status(statusCode).json({ error: e.message });
+  }
+});
+
+// Excluir peça
+app.delete('/api/aeronaves/:codigo/pecas/:idx', requireAuth, (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (![NivelPermissao.ADMINISTRADOR, NivelPermissao.ENGENHEIRO].includes(user.nivelPermissao)) {
+    return res.status(403).json({ error: 'Permissão negada' });
+  }
+  const { codigo, idx } = req.params;
+  try {
+    prodService.excluirPeca(codigo, parseInt(idx));
+    res.json({ success: true, message: 'Peça excluída' });
+  } catch (e: any) {
+    const statusCode = e.message.includes('Peça inválida') ? 404 : 400;
+    res.status(statusCode).json({ error: e.message });
   }
 });
 

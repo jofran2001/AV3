@@ -9,6 +9,10 @@ O projeto possui duas interfaces:
 - **GUI Web**: Interface web moderna com React, TypeScript e Vite
 
 ## Instalação
+## Clone o repositório
+```bash
+git clone https://github.com/jofran2001/Atv2.git
+```
 
 ### Instalação Completa
 

@@ -353,14 +353,28 @@ export function Usuarios() {
                     </span>
                   </td>
                   <td className="actions-cell">
-                    <button onClick={() => handleEdit(user)} className="edit-button">
-                      Editar
+                    <button
+                      onClick={() => handleEdit(user)}
+                      className="edit-button"
+                      title="Editar"
+                      aria-label="Editar"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/>
+                        <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="currentColor"/>
+                      </svg>
                     </button>
                     <button
                       onClick={() => handleDelete(user.id, user.nome)}
                       className="delete-button"
+                      title="Excluir"
+                      aria-label="Excluir"
                     >
-                      Excluir
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M6 7h12l-1 14H7L6 7z" fill="currentColor"/>
+                        <path d="M9 4h6v2H9V4z" fill="currentColor"/>
+                        <path d="M4 6h16v2H4V6z" fill="currentColor"/>
+                      </svg>
                     </button>
                   </td>
                 </tr>

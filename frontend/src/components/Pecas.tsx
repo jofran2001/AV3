@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { apiService } from '../services/api';
 import type { Aeronave, Peca } from '../types';
 import { TipoPeca, StatusPeca } from '../types';
+import { useAeronave } from '../context/AeronaveContext';
 import './Pecas.css';
 
 export function Pecas() {
   const [aeronaves, setAeronaves] = useState<Aeronave[]>([]);
-  const [selectedAeronave, setSelectedAeronave] = useState<string>('');
+  const { selectedAeronave, setSelectedAeronave } = useAeronave();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -17,6 +18,15 @@ export function Pecas() {
     fornecedor: '',
   });
 
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({
+    nome: '',
+    tipo: TipoPeca.NACIONAL,
+    fornecedor: '',
+    status: StatusPeca.EM_PRODUCAO,
+  });
+
   useEffect(() => {
     loadAeronaves();
   }, []);
@@ -25,8 +35,9 @@ export function Pecas() {
     try {
       const data = await apiService.listAeronaves();
       setAeronaves(data);
-      if (data.length > 0 && !selectedAeronave) {
-        setSelectedAeronave(data[0].codigo);
+      if (data.length > 0) {
+        const exists = data.some(a => a.codigo === selectedAeronave);
+        if (!selectedAeronave || !exists) setSelectedAeronave(data[0].codigo);
       }
       setError('');
     } catch (err: any) {
@@ -60,6 +71,42 @@ export function Pecas() {
       loadAeronaves();
     } catch (err: any) {
       setError(err.message || 'Erro ao atualizar status');
+    }
+  };
+
+  const openEdit = (idx: number, p: Peca) => {
+    setEditingIndex(idx);
+    setEditForm({ nome: p.nome, tipo: p.tipo, fornecedor: p.fornecedor, status: p.status });
+    setShowEditModal(true);
+  };
+
+  const handleUpdatePeca = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingIndex === null) return;
+    setError('');
+    setSuccess('');
+    try {
+      await apiService.atualizarPeca(selectedAeronave, editingIndex, editForm);
+      setShowEditModal(false);
+      setEditingIndex(null);
+      setSuccess('Peça atualizada com sucesso!');
+      loadAeronaves();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao atualizar peça');
+    }
+  };
+
+  const handleDeletePeca = async (idx: number, nome: string) => {
+    setError('');
+    setSuccess('');
+    const confirmar = window.confirm(`Excluir a peça "${nome}"? Esta ação não poderá ser desfeita.`);
+    if (!confirmar) return;
+    try {
+      await apiService.excluirPeca(selectedAeronave, idx);
+      setSuccess('Peça excluída com sucesso!');
+      loadAeronaves();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao excluir peça');
     }
   };
 
@@ -177,6 +224,31 @@ export function Pecas() {
                     </div>
                   </div>
                   <div className="peca-actions">
+                    <div className="peca-actions-row">
+                      <button
+                        className="edit-button"
+                        title="Editar"
+                        aria-label="Editar"
+                        onClick={() => openEdit(index, peca)}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/>
+                          <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="currentColor"/>
+                        </svg>
+                      </button>
+                      <button
+                        className="delete-button"
+                        title="Excluir"
+                        aria-label="Excluir"
+                        onClick={() => handleDeletePeca(index, peca.nome)}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M6 7h12l-1 14H7L6 7z" fill="currentColor"/>
+                          <path d="M9 4h6v2H9V4z" fill="currentColor"/>
+                          <path d="M4 6h16v2H4V6z" fill="currentColor"/>
+                        </svg>
+                      </button>
+                    </div>
                     <select
                       value={peca.status}
                       onChange={(e) => handleUpdateStatus(index, e.target.value as StatusPeca)}
@@ -191,6 +263,63 @@ export function Pecas() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Editar Peça</h3>
+            <form onSubmit={handleUpdatePeca}>
+              <div className="form-group">
+                <label>Nome da Peça:</label>
+                <input
+                  type="text"
+                  value={editForm.nome}
+                  onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Tipo:</label>
+                <select
+                  value={editForm.tipo}
+                  onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value as TipoPeca })}
+                  required
+                >
+                  <option value={TipoPeca.NACIONAL}>Nacional</option>
+                  <option value={TipoPeca.IMPORTADA}>Importada</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Fornecedor:</label>
+                <input
+                  type="text"
+                  value={editForm.fornecedor}
+                  onChange={(e) => setEditForm({ ...editForm, fornecedor: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Status:</label>
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as StatusPeca })}
+                  required
+                >
+                  <option value={StatusPeca.EM_PRODUCAO}>Em Produção</option>
+                  <option value={StatusPeca.EM_TRANSPORTE}>Em Transporte</option>
+                  <option value={StatusPeca.PRONTA}>Pronta</option>
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowEditModal(false)} className="cancel-button">
+                  Cancelar
+                </button>
+                <button type="submit" className="save-button">Salvar</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

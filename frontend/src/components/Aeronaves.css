@@ -42,6 +42,15 @@
   text-align: center;
 }
 
+.success-banner {
+  padding: 16px;
+  background: #c6f6d5;
+  color: #2f855a;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -198,5 +207,48 @@
   padding: 64px;
   font-size: 18px;
   color: #718096;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.edit-button,
+.delete-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-button {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.edit-button:hover {
+  background: #c7d2fe;
+}
+
+.delete-button {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.delete-button:hover {
+  background: #fecaca;
+}
+
+.edit-button svg,
+.delete-button svg {
+  width: 18px;
+  height: 18px;
 }
 

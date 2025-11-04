@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { apiService } from '../services/api';
 import type { Aeronave, Etapa } from '../types';
 import { StatusEtapa } from '../types';
+import { useAeronave } from '../context/AeronaveContext';
 import './Etapas.css';
 
 export function Etapas() {
   const [aeronaves, setAeronaves] = useState<Aeronave[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  const [selectedAeronave, setSelectedAeronave] = useState<string>('');
+  const { selectedAeronave, setSelectedAeronave } = useAeronave();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -26,8 +27,9 @@ export function Etapas() {
     try {
       const data = await apiService.listAeronaves();
       setAeronaves(data);
-      if (data.length > 0 && !selectedAeronave) {
-        setSelectedAeronave(data[0].codigo);
+      if (data.length > 0) {
+        const exists = data.some(a => a.codigo === selectedAeronave);
+        if (!selectedAeronave || !exists) setSelectedAeronave(data[0].codigo);
       }
       setError('');
     } catch (err: any) {
@@ -51,7 +53,10 @@ export function Etapas() {
     setError('');
     setSuccess('');
     try {
-      await apiService.adicionarEtapa(selectedAeronave, formData);
+      await apiService.adicionarEtapa(selectedAeronave, {
+        nome: formData.nome,
+        prazoDias: parseInt(formData.prazoDias)
+      });
       setSuccess('Etapa adicionada com sucesso!');
       setShowModal(false);
       setFormData({ nome: '', prazoDias: '' });

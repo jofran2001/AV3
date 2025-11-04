@@ -2,16 +2,24 @@ import { useEffect, useState } from 'react';
 import { apiService } from '../services/api';
 import type { Aeronave, Teste } from '../types';
 import { TipoTeste, ResultadoTeste } from '../types';
+import { useAeronave } from '../context/AeronaveContext';
 import './Testes.css';
 
 export function Testes() {
   const [aeronaves, setAeronaves] = useState<Aeronave[]>([]);
-  const [selectedAeronave, setSelectedAeronave] = useState<string>('');
+  const { selectedAeronave, setSelectedAeronave } = useAeronave();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
+    tipo: TipoTeste.ELETRICO,
+    resultado: ResultadoTeste.APROVADO,
+  });
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({
     tipo: TipoTeste.ELETRICO,
     resultado: ResultadoTeste.APROVADO,
   });
@@ -24,8 +32,9 @@ export function Testes() {
     try {
       const data = await apiService.listAeronaves();
       setAeronaves(data);
-      if (data.length > 0 && !selectedAeronave) {
-        setSelectedAeronave(data[0].codigo);
+      if (data.length > 0) {
+        const exists = data.some(a => a.codigo === selectedAeronave);
+        if (!selectedAeronave || !exists) setSelectedAeronave(data[0].codigo);
       }
       setError('');
     } catch (err: any) {
@@ -50,6 +59,42 @@ export function Testes() {
       loadAeronaves();
     } catch (err: any) {
       setError(err.message || 'Erro ao registrar teste');
+    }
+  };
+
+  const handleEdit = (idx: number, teste: Teste) => {
+    setEditingIndex(idx);
+    setEditForm({ tipo: teste.tipo, resultado: teste.resultado });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingIndex === null) return;
+    setError('');
+    setSuccess('');
+    try {
+      await apiService.atualizarTeste(selectedAeronave, editingIndex, editForm);
+      setShowEditModal(false);
+      setEditingIndex(null);
+      setSuccess('Teste atualizado com sucesso!');
+      loadAeronaves();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao atualizar teste');
+    }
+  };
+
+  const handleDelete = async (idx: number) => {
+    setError('');
+    setSuccess('');
+    const confirmar = window.confirm('Excluir este teste? Esta ação não poderá ser desfeita.');
+    if (!confirmar) return;
+    try {
+      await apiService.excluirTeste(selectedAeronave, idx);
+      setSuccess('Teste excluído com sucesso!');
+      loadAeronaves();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao excluir teste');
     }
   };
 
@@ -177,10 +222,74 @@ export function Testes() {
                       {teste.resultado}
                     </span>
                   </div>
+                  <div className="teste-actions">
+                    <button
+                      className="edit-button"
+                      onClick={() => handleEdit(index, teste)}
+                      title="Editar"
+                      aria-label="Editar"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/>
+                        <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="currentColor"/>
+                      </svg>
+                    </button>
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDelete(index)}
+                      title="Excluir"
+                      aria-label="Excluir"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M6 7h12l-1 14H7L6 7z" fill="currentColor"/>
+                        <path d="M9 4h6v2H9V4z" fill="currentColor"/>
+                        <path d="M4 6h16v2H4V6z" fill="currentColor"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Editar Teste</h3>
+            <form onSubmit={handleUpdate}>
+              <div className="form-group">
+                <label>Tipo de Teste:</label>
+                <select
+                  value={editForm.tipo}
+                  onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value as TipoTeste })}
+                  required
+                >
+                  <option value={TipoTeste.ELETRICO}>Elétrico</option>
+                  <option value={TipoTeste.HIDRAULICO}>Hidráulico</option>
+                  <option value={TipoTeste.AERODINAMICO}>Aerodinâmico</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Resultado:</label>
+                <select
+                  value={editForm.resultado}
+                  onChange={(e) => setEditForm({ ...editForm, resultado: e.target.value as ResultadoTeste })}
+                  required
+                >
+                  <option value={ResultadoTeste.APROVADO}>Aprovado</option>
+                  <option value={ResultadoTeste.REPROVADO}>Reprovado</option>
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowEditModal(false)} className="cancel-button">
+                  Cancelar
+                </button>
+                <button type="submit" className="save-button">Salvar</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

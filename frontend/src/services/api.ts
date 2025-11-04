@@ -1,4 +1,4 @@
-import type { Aeronave, Funcionario, Peca, Etapa, Teste } from '../types';
+import type { Aeronave, Funcionario, Teste, Peca } from '../types';
 import { TipoAeronave, TipoPeca, StatusPeca, NivelPermissao, TipoTeste, ResultadoTeste } from '../types';
 
 const API_URL = 'http://localhost:3001/api';
@@ -56,6 +56,10 @@ class ApiService {
     return this.request<Aeronave[]>('/aeronaves');
   }
 
+  async getAeronave(codigo: string): Promise<Aeronave> {
+    return this.request<Aeronave>(`/aeronaves/${codigo}`);
+  }
+
   async cadastrarAeronave(aeronave: {
     codigo: string;
     modelo: string;
@@ -69,11 +73,35 @@ class ApiService {
     });
   }
 
+  async atualizarAeronave(
+    codigo: string,
+    updates: Partial<Pick<Aeronave, 'modelo' | 'tipo' | 'capacidade' | 'alcanceKm'>>
+  ) {
+    return this.request<{ success: boolean; message: string }>(`/aeronaves/${codigo}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async excluirAeronave(codigo: string) {
+    return this.request<{ success: boolean; message: string }>(`/aeronaves/${codigo}`, {
+      method: 'DELETE',
+    });
+  }
+
   async adicionarPeca(codigo: string, peca: { nome: string; tipo: TipoPeca; fornecedor: string }) {
     return this.request<{ success: boolean; message: string }>(`/aeronaves/${codigo}/pecas`, {
       method: 'POST',
       body: JSON.stringify(peca),
     });
+  }
+
+  async listarPecas(codigo: string) {
+    return this.request<Peca[]>(`/aeronaves/${codigo}/pecas`);
+  }
+
+  async obterPeca(codigo: string, idx: number) {
+    return this.request<Peca>(`/aeronaves/${codigo}/pecas/${idx}`);
   }
 
   async adicionarEtapa(codigo: string, etapa: { nome: string; prazoDias: number }) {
@@ -90,10 +118,52 @@ class ApiService {
     });
   }
 
+  async listarTestes(codigo: string) {
+    return this.request<Teste[]>(`/aeronaves/${codigo}/testes`);
+  }
+
+  async obterTeste(codigo: string, idx: number) {
+    return this.request<Teste>(`/aeronaves/${codigo}/testes/${idx}`);
+  }
+
+  async atualizarTeste(
+    codigo: string,
+    idx: number,
+    updates: { tipo?: TipoTeste; resultado?: ResultadoTeste }
+  ) {
+    return this.request<{ success: boolean; message: string }>(`/aeronaves/${codigo}/testes/${idx}` , {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async excluirTeste(codigo: string, idx: number) {
+    return this.request<{ success: boolean; message: string }>(`/aeronaves/${codigo}/testes/${idx}`, {
+      method: 'DELETE',
+    });
+  }
+
   async atualizarStatusPeca(codigo: string, idx: number, status: StatusPeca) {
     return this.request<{ success: boolean }>(`/aeronaves/${codigo}/pecas/${idx}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
+    });
+  }
+
+  async atualizarPeca(
+    codigo: string,
+    idx: number,
+    updates: { nome?: string; tipo?: TipoPeca; fornecedor?: string; status?: StatusPeca }
+  ) {
+    return this.request<{ success: boolean; message: string }>(`/aeronaves/${codigo}/pecas/${idx}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async excluirPeca(codigo: string, idx: number) {
+    return this.request<{ success: boolean; message: string }>(`/aeronaves/${codigo}/pecas/${idx}`, {
+      method: 'DELETE',
     });
   }
 

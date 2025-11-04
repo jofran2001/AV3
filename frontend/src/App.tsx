@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './components/Login';
+import { AeronaveProvider } from './context/AeronaveContext';
 import { Navbar } from './components/Navbar';
 import { Dashboard } from './components/Dashboard';
 import { Aeronaves } from './components/Aeronaves';
@@ -46,10 +47,12 @@ function AppContent() {
   };
 
   return (
-    <div className="app">
-      <Navbar currentPage={currentPage} onNavigate={setCurrentPage} />
-      <main className="main-content">{renderPage()}</main>
-    </div>
+    <AeronaveProvider>
+      <div className="app">
+        <Navbar currentPage={currentPage} onNavigate={setCurrentPage} />
+        <main className="main-content">{renderPage()}</main>
+      </div>
+    </AeronaveProvider>
   );
 }
 

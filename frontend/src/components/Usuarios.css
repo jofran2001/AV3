@@ -12,6 +12,9 @@
   cursor: pointer;
   transition: all 0.2s;
   margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .edit-button {
@@ -30,6 +33,12 @@
 
 .delete-button:hover {
   background: #fecaca;
+}
+
+.edit-button svg,
+.delete-button svg {
+  width: 18px;
+  height: 18px;
 }
 
 .badge {
