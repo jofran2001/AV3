@@ -90,7 +90,7 @@ Este usuário é criado automaticamente na primeira execução.
 ### Gerenciamento de Testes
 - Registro de testes (Elétrico, Hidráulico, Aerodinâmico)
 - Resultados (Aprovado/Reprovado)
-- Visualização do histórico de testes
+
 
 ### Gerenciamento de Usuários (apenas ADMIN)
 - Listagem de todos os usuários
