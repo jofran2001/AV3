@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-// Imports atualizados para as versões .prisma
 import { AuthService } from './auth/authService.prisma';
 import { ProductionService } from './services/productionService.prisma';
 import { Aeronave, Peca, Etapa, Teste, Funcionario } from './classes/models';
@@ -11,22 +10,20 @@ import { timingHeadersMiddleware } from './middleware/timingHeadersMiddleware';
 const app = express();
 const PORT = 3001;
 
-// Middlewares globais
 app.use(cors());
 app.use(express.json());
-app.use(timingHeadersMiddleware); // Adiciona headers de timing para o cliente
-app.use(timingMiddleware); // Adiciona logs de timing no servidor
+app.use(timingHeadersMiddleware); 
+app.use(timingMiddleware);
 
 const authService = new AuthService();
 const prodService = new ProductionService();
 
 const sessions: { [key: string]: Funcionario } = {};
 
-// Rota de login atualizada com async/await e try-catch
 app.post('/api/login', async (req: Request, res: Response) => {
   try {
     const { usuario, senha } = req.body;
-    const user = await authService.authenticate(usuario, senha); // Adicionado await
+    const user = await authService.authenticate(usuario, senha);
     if (!user) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
@@ -34,7 +31,7 @@ app.post('/api/login', async (req: Request, res: Response) => {
     sessions[sessionId] = user;
     res.json({ sessionId, user: { ...user, senha: undefined } });
   } catch (e: any) {
-    res.status(500).json({ error: e.message }); // Catch padronizado
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -47,7 +44,6 @@ function requireAuth(req: Request, res: Response, next: () => void) {
   next();
 }
 
-// Rota de logout mantida como estava, conforme instruções
 app.post('/api/logout', requireAuth, (req: Request, res: Response) => {
   const sessionId = req.headers.authorization?.replace('Bearer ', '');
   if (sessionId) {
@@ -56,31 +52,28 @@ app.post('/api/logout', requireAuth, (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-// Listar aeronaves
 app.get('/api/aeronaves', requireAuth, async (req: Request, res: Response) => {
   try {
-    const aeronaves = await prodService.listAeronaves(); // Adicionado await
+    const aeronaves = await prodService.listAeronaves();
     res.json(aeronaves);
   } catch (e: any) {
-    res.status(500).json({ error: e.message }); // Catch padronizado
+    res.status(500).json({ error: e.message }); 
   }
 });
 
-// Obter aeronave por código
 app.get('/api/aeronaves/:codigo', requireAuth, async (req: Request, res: Response) => {
   try {
     const { codigo } = req.params;
-    const a = await prodService.getAeronave(codigo); // Adicionado await
+    const a = await prodService.getAeronave(codigo); 
     if (!a) {
       return res.status(404).json({ error: 'Aeronave não encontrada' });
     }
     res.json(a);
   } catch (e: any) {
-    res.status(500).json({ error: e.message }); // Catch padronizado
+    res.status(500).json({ error: e.message });
   }
 });
 
-// Cadastrar aeronave
 app.post('/api/aeronaves', requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
@@ -89,10 +82,10 @@ app.post('/api/aeronaves', requireAuth, async (req: Request, res: Response) => {
     }
     const { codigo, modelo, tipo, capacidade, alcanceKm } = req.body;
     const a = new Aeronave(codigo, modelo, tipo, capacidade, alcanceKm);
-    await prodService.cadastrarAeronave(a); // Adicionado await
+    await prodService.cadastrarAeronave(a);
     res.json({ success: true, message: 'Aeronave cadastrada' });
   } catch (e: any) {
-    res.status(500).json({ error: e.message }); // Catch padronizado
+    res.status(500).json({ error: e.message }); 
   }
 });
 
@@ -343,17 +336,33 @@ app.post('/api/aeronaves/:codigo/relatorio', requireAuth, async (req: Request, r
     const { codigo } = req.params;
     const pdfPath = await prodService.gerarRelatorio(codigo);
     
-    // Enviar o PDF para download
-    res.download(pdfPath, `relatorio_${codigo}.pdf`, (err) => {
-      if (err) {
-        console.error('Erro ao enviar PDF:', err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Erro ao gerar relatório' });
-        }
+    // Configura headers manualmente antes dos middlewares
+    const fs = await import('fs');
+    const path = await import('path');
+    
+    const fileName = `relatorio_${codigo}.pdf`;
+    const stat = fs.statSync(pdfPath);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', stat.size);
+    
+    // Envia o arquivo como stream
+    const fileStream = fs.createReadStream(pdfPath);
+    fileStream.pipe(res);
+    
+    // Trata erros no stream
+    fileStream.on('error', (err) => {
+      console.error('Erro ao ler arquivo PDF:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Erro ao enviar relatório' });
       }
     });
+    
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: e.message });
+    }
   }
 });
 

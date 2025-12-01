@@ -5,7 +5,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Iniciando seed do banco de dados...');
 
-  // Criar usuário system (para auditoria automática)
   const system = await prisma.user.upsert({
     where: { usuario: 'system' },
     update: {},
@@ -22,7 +21,6 @@ async function main() {
 
   console.log('✅ Usuário system criado:', system.usuario);
 
-  // Criar usuário admin padrão
   const admin = await prisma.user.upsert({
     where: { usuario: 'admin' },
     update: {},
@@ -31,14 +29,13 @@ async function main() {
       telefone: '(00) 00000-0000',
       endereco: 'Sede Principal',
       usuario: 'admin',
-      senha: 'admin123', // Em produção, usar hash
+      senha: 'admin123', 
       nivelPermissao: 'ADMINISTRADOR',
     },
   });
 
   console.log('✅ Usuário admin criado:', admin.usuario);
 
-  // Criar usuário engenheiro de exemplo
   const engenheiro = await prisma.user.upsert({
     where: { usuario: 'eng1' },
     update: {},
@@ -54,7 +51,6 @@ async function main() {
 
   console.log('✅ Usuário engenheiro criado:', engenheiro.usuario);
 
-  // Criar usuário operador de exemplo
   const operador = await prisma.user.upsert({
     where: { usuario: 'op1' },
     update: {},

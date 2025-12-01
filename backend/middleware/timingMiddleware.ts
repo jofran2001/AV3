@@ -1,25 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 
-/**
- * Middleware avançado para medir tempos de requisição e resposta
- * Separa:
- * - Tempo de processamento no servidor (lógica de negócio)
- * - Tempo para enviar a resposta ao cliente
- * - Tempo total (requisição recebida até resposta enviada)
- */
 export function timingMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Marca o tempo de chegada da requisição
   const requestArrivalTime = process.hrtime();
   
-  // Marca quando a lógica de negócio começou (após middlewares iniciais)
   let processingStartTime: [number, number] | null = null;
   
-  // Intercepta o momento em que a resposta começa a ser escrita
   const originalWrite = res.write;
   const originalEnd = res.end;
   let responseStartTime: [number, number] | null = null;
   
-  // Sobrescreve res.write para capturar início do envio
   res.write = function(...args: any[]): any {
     if (!responseStartTime) {
       responseStartTime = process.hrtime();
@@ -27,7 +16,6 @@ export function timingMiddleware(req: Request, res: Response, next: NextFunction
     return originalWrite.apply(res, args as any);
   };
   
-  // Sobrescreve res.end para capturar início do envio (se não houve write)
   res.end = function(...args: any[]): any {
     if (!responseStartTime) {
       responseStartTime = process.hrtime();
@@ -35,38 +23,30 @@ export function timingMiddleware(req: Request, res: Response, next: NextFunction
     return originalEnd.apply(res, args as any);
   };
   
-  // Escuta o evento 'finish' quando a resposta é completamente enviada
   res.on('finish', () => {
     const finishTime = process.hrtime();
     
-    // Calcula os tempos
     const totalTime = calculateTime(requestArrivalTime, finishTime);
     
     let processingTime = 0;
     let responseTime = 0;
     
     if (processingStartTime && responseStartTime) {
-      // Tempo de processamento: desde que next() foi chamado até começar a enviar resposta
       processingTime = calculateTime(processingStartTime, responseStartTime);
       
-      // Tempo de resposta: desde que começou a enviar até finalizar
       responseTime = calculateTime(responseStartTime, finishTime);
     } else {
-      // Fallback se não conseguiu capturar tempos específicos
       processingTime = totalTime;
     }
     
-    // Cores
     const statusColor = getStatusColor(res.statusCode);
     const methodColor = getMethodColor(req.method);
     const totalTimeColor = getTimeColor(totalTime);
     const processingTimeColor = getTimeColor(processingTime);
     const responseTimeColor = getTimeColor(responseTime);
     
-    // Tamanho da resposta (se disponível)
     const contentLength = res.get('Content-Length') || 'unknown';
     
-    // Log detalhado e colorido
     console.log(
       `${methodColor}[${req.method}]${resetColor} ` +
       `${req.originalUrl} - ` +
@@ -78,21 +58,17 @@ export function timingMiddleware(req: Request, res: Response, next: NextFunction
     );
   });
   
-  // Marca quando o processamento real começa (após este middleware)
   processingStartTime = process.hrtime();
   
-  next(); // Continua para a próxima rota/middleware
+  next(); 
 }
 
-/**
- * Calcula o tempo decorrido entre dois momentos
- */
+
 function calculateTime(start: [number, number], end: [number, number]): number {
   const diff = process.hrtime(start);
   return (diff[0] * 1000) + (diff[1] / 1_000_000);
 }
 
-// Códigos ANSI para cores no terminal
 const resetColor = '\x1b[0m';
 
 function getStatusColor(statusCode: number): string {

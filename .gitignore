@@ -1,11 +1,54 @@
+# Dependencies
 node_modules/
+frontend/node_modules/
+
+# Build outputs
 dist/
+frontend/dist/
+*.tsbuildinfo
+
+# Data e relatórios (gerados automaticamente)
 data/
 relatorios/
-*.log
 
-# Prisma
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables (NUNCA enviar!)
 .env
 .env.local
+.env.*.local
+
+# Database (SQLite, se usar)
 prisma/*.db
 prisma/*.db-journal
+
+# Migrations aplicadas (Prisma guarda histórico)
+# NÃO ignore a pasta migrations/, ela deve ir pro Git!
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Arquivos SQL temporários (NÃO enviar senhas!)
+fix-permissions.sql
+setup-database.sql
+
+# Documentação local (não versionar)
+INSTRUCOES.md
+USERFLOWS.md
+USERFLOWS_VISUAL.md

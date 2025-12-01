@@ -1,4 +1,3 @@
-// Tipos compartilhados para uso no frontend
 export enum TipoAeronave {
   COMERCIAL = 'COMERCIAL',
   MILITAR = 'MILITAR'
