@@ -15,8 +15,8 @@ Antes de começar, certifique-se de ter instalado:
 ### 1. Clone o Repositório
 
 ```bash
-git clone https://github.com/jofran2001/Atv3.git
-cd Atv3
+git clone https://github.com/jofran2001/AV3.git
+cd AV3
 ```
 
 ### 2. Configure o Banco de Dados MySQL
@@ -192,7 +192,7 @@ npm run build
 ## 📁 Estrutura do Projeto
 
 ```
-Atv3/
+AV3/
 ├── backend/                 # Código do servidor
 │   ├── auth/               # Autenticação
 │   ├── classes/            # Modelos de dados
